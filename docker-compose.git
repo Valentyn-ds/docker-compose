@@ -1,0 +1,42 @@
+version: "3.5"
+services:
+  frontend:
+    image: phpmyadmin:5.2.0-apache
+    build:
+      context: .
+      dockerfile: frontend
+    ports:
+      - "8080:80"
+    networks:
+      - dockercompose-frontend
+    environment:
+      PMA_HOST: "172.24.0.3"
+      PMA_PORT: 3306
+
+
+
+  mydb:
+    image: mariadb:lts
+    build:
+      context: .
+      dockerfile: mydb
+    networks:
+      - dockercompose-frontend
+    environment:
+      MARIADB_ALLOW_EMPTY_ROOT_PASSWORD: "true"
+    ports:
+      - 3306
+    healthcheck:
+        test: [ "CMD", "healthcheck.sh", "--su-mysql", "--connect", "--innodb_initialized" ]
+        start_period: 1m
+        interval: 1m
+        timeout: 5s
+        retries: 3
+    volumes:
+      - server_db:/var/lib/mysql
+
+networks:
+  dockercompose-frontend:
+    driver: bridge
+volumes:
+  server_db:
